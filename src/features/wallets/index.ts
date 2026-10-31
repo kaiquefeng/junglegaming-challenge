@@ -1,2 +1,1 @@
-// API pública da feature wallets: exporte aqui apenas o que páginas e outras features podem importar.
-export {}
+export { WalletsForm } from './components/wallets-form/wallets-form'

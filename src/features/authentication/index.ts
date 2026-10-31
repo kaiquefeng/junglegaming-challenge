@@ -1,2 +1,3 @@
-// API pública da feature authentication: exporte aqui apenas o que páginas e outras features podem importar.
-export {}
+export { AuthModal } from './components/auth-modal/auth-modal'
+export type { AuthMode } from './components/auth-modal/auth-modal.types'
+export { MobileAuth } from './components/mobile-auth/mobile-auth'

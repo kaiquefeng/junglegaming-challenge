@@ -1,2 +1,2 @@
-// API pública da feature checkout: exporte aqui apenas o que páginas e outras features podem importar.
-export {}
+export { CheckoutView } from './components/checkout-view/checkout-view'
+export { MobileCheckout } from './components/mobile-checkout/mobile-checkout'

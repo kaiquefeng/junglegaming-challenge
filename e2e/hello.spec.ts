@@ -1,75 +1,119 @@
 import { expect, test } from '@playwright/test'
 
-test('home renderiza hero, catálogo, banners, diário e rodapé com dados do MSW', async ({
-  page,
-}) => {
-  const apiCalls: string[] = []
-  page.on('request', (request) => {
-    const { pathname } = new URL(request.url())
-    if (pathname.startsWith('/api/')) apiCalls.push(pathname)
+test.describe('desktop', () => {
+  test.skip(({ isMobile }) => isMobile, 'layout desktop')
+
+  test('home renderiza hero, catálogo, banners, diário e rodapé com dados do MSW', async ({
+    page,
+  }) => {
+    const apiCalls: string[] = []
+    page.on('request', (request) => {
+      const { pathname } = new URL(request.url())
+      if (pathname.startsWith('/api/')) apiCalls.push(pathname)
+    })
+
+    await page.goto('/')
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: /seja dono do futuro/i }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Emerald Ape #042' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Diário da Cunhagem' }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('© 2026 Kurio. Propriedade digital para todos.'),
+    ).toBeVisible()
+
+    expect(apiCalls).toEqual(
+      expect.arrayContaining([
+        '/api/home/hero',
+        '/api/nfts',
+        '/api/collections',
+        '/api/networks',
+        '/api/promos',
+        '/api/articles',
+        '/api/footer',
+      ]),
+    )
   })
 
-  await page.goto('/')
+  test('aba, paginação e filtro de coleção atualizam o catálogo e a URL', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: 'Emerald Ape #042' }),
+    ).toBeVisible()
 
-  await expect(
-    page.getByRole('heading', { level: 1, name: /seja dono do futuro/i }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'Emerald Ape #042' }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'Diário da Cunhagem' }),
-  ).toBeVisible()
-  await expect(
-    page.getByText('© 2026 Kurio. Propriedade digital para todos.'),
-  ).toBeVisible()
+    await page.getByRole('link', { name: 'Página 2' }).click()
+    await expect(page).toHaveURL(/page=2/)
+    await expect(
+      page.getByRole('heading', { name: 'Golden Echo #411' }),
+    ).toBeVisible()
 
-  expect(apiCalls).toEqual(
-    expect.arrayContaining([
-      '/api/home/hero',
-      '/api/nfts',
-      '/api/collections',
-      '/api/networks',
-      '/api/promos',
-      '/api/articles',
-      '/api/footer',
-    ]),
-  )
+    await page.getByRole('button', { name: /Música/ }).click()
+    await expect(page).toHaveURL(/collection=musica/)
+    await expect(page).toHaveURL(/page=1/)
+
+    await page.getByRole('tab', { name: 'Em alta' }).click()
+    await expect(page).toHaveURL(/tab=trending/)
+  })
+
+  test('newsletter confirma a inscrição e valida o e-mail', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const input = page.getByLabel('Antecipe-se ao próximo lançamento')
+
+    await input.fill('invalido')
+    await page.getByRole('button', { name: 'Enviar' }).click()
+    await expect(page.getByText('Informe um e-mail válido.')).toBeVisible()
+
+    await input.fill('colecionador@email.com')
+    await page.getByRole('button', { name: 'Enviar' }).click()
+    await expect(
+      page.getByText('Inscrição confirmada. Obrigado!'),
+    ).toBeVisible()
+  })
 })
 
-test('aba, paginação e filtro de coleção atualizam o catálogo e a URL', async ({
+test('fluxo desktop: carrinho leva ao pagamento e à confirmação', async ({
   page,
+  isMobile,
 }) => {
-  await page.goto('/')
+  test.skip(isMobile, 'layout desktop')
+  await page.goto('/cart')
+  await expect(page.getByText('Resumo da carteira')).toBeVisible()
+  await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
+  await expect(page).toHaveURL(/\/checkout/)
+  await page.getByRole('link', { name: 'Confirmar compra' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Emerald Ape #042' }),
+    page.getByText('Seus NFTs agora estão na sua carteira'),
   ).toBeVisible()
-
-  await page.getByRole('link', { name: 'Página 2' }).click()
-  await expect(page).toHaveURL(/page=2/)
-  await expect(
-    page.getByRole('heading', { name: 'Golden Echo #411' }),
-  ).toBeVisible()
-
-  await page.getByRole('button', { name: /Música/ }).click()
-  await expect(page).toHaveURL(/collection=musica/)
-  await expect(page).toHaveURL(/page=1/)
-
-  await page.getByRole('tab', { name: 'Em alta' }).click()
-  await expect(page).toHaveURL(/tab=trending/)
 })
 
-test('newsletter confirma a inscrição e valida o e-mail', async ({ page }) => {
+test('mobile: início, carrinho e login usam os layouts do Figma', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'layout mobile')
   await page.goto('/')
-  const input = page.getByLabel('Antecipe-se ao próximo lançamento')
+  await expect(page.getByLabel('Explorar coleções')).toBeVisible()
+  await expect(
+    page.getByRole('navigation', { name: 'Navegação principal' }),
+  ).toBeVisible()
+  await expect(page.getByRole('contentinfo')).toHaveCount(0)
 
-  await input.fill('invalido')
-  await page.getByRole('button', { name: 'Enviar' }).click()
-  await expect(page.getByText('Informe um e-mail válido.')).toBeVisible()
+  await page.getByRole('link', { name: 'Carrinho' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Carrinho de NFTs' }),
+  ).toBeVisible()
 
-  await input.fill('colecionador@email.com')
-  await page.getByRole('button', { name: 'Enviar' }).click()
-  await expect(page.getByText('Inscrição confirmada. Obrigado!')).toBeVisible()
+  await page.goto('/login')
+  await expect(page.getByText('Novo na Kurio?')).toBeVisible()
 })
 
 test('rota inexistente mostra a página de não encontrado', async ({ page }) => {
