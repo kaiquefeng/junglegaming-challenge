@@ -1,0 +1,6 @@
+// API pública da feature home-content: exporte aqui apenas o que páginas, layouts e outras features podem importar.
+export { HeroSection } from './components/hero-section/hero-section'
+export { JournalSection } from './components/journal-section/journal-section'
+export { PromoSection } from './components/promo-section/promo-section'
+export { SiteFooter } from './components/site-footer/site-footer'
+export { SiteHeader } from './components/site-header/site-header'
