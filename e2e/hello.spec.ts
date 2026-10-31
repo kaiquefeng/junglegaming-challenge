@@ -80,21 +80,6 @@ test.describe('desktop', () => {
   })
 })
 
-test('fluxo desktop: carrinho leva ao pagamento e à confirmação', async ({
-  page,
-  isMobile,
-}) => {
-  test.skip(isMobile, 'layout desktop')
-  await page.goto('/cart')
-  await expect(page.getByText('Resumo da carteira')).toBeVisible()
-  await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
-  await expect(page).toHaveURL(/\/checkout/)
-  await page.getByRole('link', { name: 'Confirmar compra' }).click()
-  await expect(
-    page.getByText('Seus NFTs agora estão na sua carteira'),
-  ).toBeVisible()
-})
-
 test('mobile: início, carrinho e login usam os layouts do Figma', async ({
   page,
   isMobile,

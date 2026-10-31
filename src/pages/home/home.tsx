@@ -25,14 +25,21 @@ export function HomePage() {
   const navigate = route.useNavigate()
 
   function handleFiltersChange(patch: Partial<NftListParams>) {
-    // Mudar qualquer filtro (exceto a própria página) volta para a primeira página.
     const resetsPage = Object.keys(patch).some((key) => key !== 'page')
     navigate({
       search: (prev) => ({ ...prev, ...patch, ...(resetsPage && { page: 1 }) }),
     })
   }
 
-  if (!isDesktop) return <MobileHome />
+  if (!isDesktop) {
+    return (
+      <MobileHome
+        tab={filters.tab}
+        q={filters.q}
+        onChange={(patch) => handleFiltersChange(patch)}
+      />
+    )
+  }
 
   return (
     <>

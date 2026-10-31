@@ -5,8 +5,9 @@ export type NftSort = 'recent' | 'price-asc' | 'price-desc'
 export type Nft = {
   id: string
   name: string
-  price: number
-  previousPrice?: number
+
+  price: string
+  previousPrice?: string
   currency: 'ETH'
   image: string
   imageAlt: string
@@ -15,12 +16,16 @@ export type Nft = {
   isNew: boolean
   isTrending: boolean
   listedAt: string
+
+  version: number
+  soldOut: boolean
 }
 
 export type NftListParams = {
   tab: NftTab
   sort: NftSort
   page: number
+  q?: string
   collection?: string
   network?: string
   minPrice?: number

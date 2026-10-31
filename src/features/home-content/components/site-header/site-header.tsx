@@ -1,5 +1,5 @@
-import { Link } from '@tanstack/react-router'
-import { LogIn, Menu, Search, ShoppingCart } from 'lucide-react'
+import { Link, useRouter } from '@tanstack/react-router'
+import { LogIn, LogOut, Menu, Search, ShoppingCart } from 'lucide-react'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import {
@@ -16,6 +16,8 @@ import {
   SheetTrigger,
 } from '@/components/sheet'
 import { Skeleton } from '@/components/skeleton'
+import { useLogout, useSession } from '@/features/authentication'
+import { useCart } from '@/features/cart'
 import { useSiteHeader } from '../../hooks/use-home-content'
 
 const navLinkClass =
@@ -23,6 +25,22 @@ const navLinkClass =
 
 export function SiteHeader() {
   const { data } = useSiteHeader()
+  const router = useRouter()
+  const { user, isAuthenticated } = useSession()
+  const { data: cart } = useCart()
+  const logout = useLogout()
+  const cartCount = cart?.count ?? 0
+
+  const here = router.state.location
+  const loginRedirect = /^\/(login|signup)/.test(here.pathname)
+    ? undefined
+    : here.href
+
+  function focusSearch() {
+    router.navigate({ to: '/' }).then(() => {
+      document.getElementById('catalog-search')?.focus()
+    })
+  }
 
   return (
     <header className="border-b">
@@ -96,7 +114,12 @@ export function SiteHeader() {
         )}
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" aria-label="Buscar">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Buscar"
+            onClick={focusSearch}
+          >
             <Search aria-hidden="true" />
           </Button>
           <Button
@@ -104,26 +127,54 @@ export function SiteHeader() {
             variant="ghost"
             size="icon"
             className="relative"
-            aria-label={`Carrinho, ${data?.cartCount ?? 0} itens`}
+            aria-label={`Carrinho, ${cartCount} itens`}
           >
             <Link to="/cart">
               <ShoppingCart aria-hidden="true" />
-              {data && data.cartCount > 0 && (
+              {cartCount > 0 && (
                 <Badge
                   aria-hidden="true"
                   className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full px-1 text-[10px]"
                 >
-                  {data.cartCount}
+                  {cartCount}
                 </Badge>
               )}
             </Link>
           </Button>
-          <Button asChild size="sm" className="font-bold">
-            <Link to="/login">
-              <LogIn aria-hidden="true" />
-              Entrar
-            </Link>
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/profile" aria-label="Meu perfil">
+                  {user?.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      className="size-6 rounded-full object-cover"
+                    />
+                  ) : null}
+                  <span className="max-w-[120px] truncate">
+                    {user?.displayName ?? 'Perfil'}
+                  </span>
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => logout.mutate()}
+                disabled={logout.isPending}
+              >
+                <LogOut aria-hidden="true" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm" className="font-bold">
+              <Link to="/login" search={{ redirect: loginRedirect }}>
+                <LogIn aria-hidden="true" />
+                Entrar
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

@@ -77,7 +77,6 @@ async function audit(url: string, profile: Profile, chromePort: number) {
 async function main() {
   await mkdir(REPORTS_DIR, { recursive: true })
 
-  // Build otimizado com os mocks ativos (mesmo build da demonstração).
   await run('bun', ['run', 'build'])
   const server: ChildProcess = spawn(
     'bun',

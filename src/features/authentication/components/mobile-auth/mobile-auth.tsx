@@ -1,51 +1,30 @@
 import { Link } from '@tanstack/react-router'
-import { Eye } from 'lucide-react'
-import { Input } from '@/components/input'
+import { FormField } from '@/components/form-field'
 import { SocialIcon } from '@/components/social-icon'
+import { announce } from '@/features/realtime'
+import { useAuthForm } from '../../hooks/use-auth-form'
 import type { AuthMode } from '../auth-modal/auth-modal.types'
 import { GoogleMark } from '../google-mark/google-mark'
 
 const copy = {
-  login: {
-    title: 'Entrar',
-    submit: 'Entrar',
-    fields: [
-      { name: 'email', type: 'email', placeholder: 'contato@email.com' },
-      {
-        name: 'password',
-        type: 'password',
-        placeholder: 'Senha',
-        toggle: true,
-      },
-    ],
-  },
-  signup: {
-    title: 'Criar perfil de colecionador',
-    submit: 'Criar perfil',
-    fields: [
-      { name: 'username', type: 'text', placeholder: 'Nome de usuário' },
-      { name: 'email', type: 'email', placeholder: 'Digite seu e-mail' },
-      {
-        name: 'password',
-        type: 'password',
-        placeholder: 'Senha',
-        toggle: true,
-      },
-      {
-        name: 'confirm',
-        type: 'password',
-        placeholder: 'Confirmar senha',
-        toggle: true,
-      },
-    ],
-  },
+  login: { title: 'Entrar', submit: 'Entrar' },
+  signup: { title: 'Criar perfil de colecionador', submit: 'Criar perfil' },
 } as const
 
 const socialButton =
   'flex h-10 items-center justify-center gap-3 rounded-[5px] border border-border text-[13px] font-medium text-muted-foreground'
 
+const socialNotice = () =>
+  announce(
+    'Login social indisponível nesta versão. Use e-mail e senha.',
+    'info',
+  )
+
+const fieldClass = 'h-[50px] rounded-[10px] text-sm'
+
 export function MobileAuth({ mode }: { mode: AuthMode }) {
   const content = copy[mode]
+  const { form, submit, pending, expired } = useAuthForm(mode)
 
   return (
     <div className="flex min-h-screen flex-col gap-10 px-7 pt-20 pb-6">
@@ -61,36 +40,90 @@ export function MobileAuth({ mode }: { mode: AuthMode }) {
       >
         {content.title}
       </h1>
-      <form className="flex flex-col gap-10">
+      <form noValidate onSubmit={submit} className="flex flex-col gap-10">
         <div className="flex flex-col gap-3">
-          {content.fields.map((field) => (
-            <div key={field.name} className="relative">
-              <Input
-                name={field.name}
-                type={field.type}
-                placeholder={field.placeholder}
-                aria-label={field.placeholder}
-                className="h-[50px] rounded-[10px] border-border px-4 pr-12 text-sm shadow-none placeholder:text-[#b39463]"
-              />
-              {'toggle' in field && (
-                <Eye
-                  aria-hidden="true"
-                  className="absolute top-1/2 right-4 size-[18px] -translate-y-1/2 text-[#b39463]"
-                />
-              )}
-            </div>
-          ))}
+          {expired && (
+            <p
+              role="alert"
+              className="rounded border border-primary p-2 text-sm"
+            >
+              Sua sessão expirou. Entre novamente para continuar de onde parou.
+            </p>
+          )}
+          {form.formError && (
+            <p
+              role="alert"
+              className="rounded border border-destructive p-2 text-sm text-destructive"
+            >
+              {form.formError}
+            </p>
+          )}
+          {mode === 'signup' && (
+            <FormField
+              id="m-username"
+              label="Nome de usuário"
+              placeholder="Nome de usuário"
+              hideLabel
+              autoComplete="username"
+              className={fieldClass}
+              {...form.bind('username')}
+            />
+          )}
+          <FormField
+            id="m-email"
+            label="E-mail"
+            type="email"
+            placeholder={
+              mode === 'login' ? 'contato@email.com' : 'Digite seu e-mail'
+            }
+            hideLabel
+            autoComplete="email"
+            className={fieldClass}
+            {...form.bind('email')}
+          />
+          <FormField
+            id="m-password"
+            label="Senha"
+            type="password"
+            placeholder="Senha"
+            hideLabel
+            autoComplete={
+              mode === 'login' ? 'current-password' : 'new-password'
+            }
+            className={fieldClass}
+            {...form.bind('password')}
+          />
+          {mode === 'signup' && (
+            <FormField
+              id="m-confirm"
+              label="Confirmar senha"
+              type="password"
+              placeholder="Confirmar senha"
+              hideLabel
+              autoComplete="new-password"
+              className={fieldClass}
+              {...form.bind('confirm')}
+            />
+          )}
           {mode === 'login' && (
-            <a href="/login" className="self-end text-sm text-highlight">
+            <button
+              type="button"
+              onClick={() =>
+                announce('Recuperação de senha indisponível nesta versão.')
+              }
+              className="self-end text-sm text-highlight"
+            >
               Esqueceu a senha?
-            </a>
+            </button>
           )}
         </div>
         <button
           type="submit"
-          className="h-[60px] rounded-[10px] bg-primary text-base font-bold text-primary-foreground"
+          disabled={pending}
+          aria-busy={pending}
+          className="h-[60px] rounded-[10px] bg-primary text-base font-bold text-primary-foreground disabled:opacity-60"
         >
-          {content.submit}
+          {pending ? 'Aguarde…' : content.submit}
         </button>
       </form>
       <div className="flex flex-col gap-3">
@@ -100,11 +133,11 @@ export function MobileAuth({ mode }: { mode: AuthMode }) {
           <span className="h-px flex-1 bg-border" />
         </div>
         <div className="flex flex-col gap-4">
-          <button type="button" className={socialButton}>
+          <button type="button" className={socialButton} onClick={socialNotice}>
             <GoogleMark />
             Continuar com Google
           </button>
-          <button type="button" className={socialButton}>
+          <button type="button" className={socialButton} onClick={socialNotice}>
             <SocialIcon network="facebook" className="size-5 text-[#3b5999]" />
             Continuar com Facebook
           </button>
@@ -113,11 +146,25 @@ export function MobileAuth({ mode }: { mode: AuthMode }) {
       <p className="text-center text-[15px] text-muted-foreground">
         {mode === 'login' ? (
           <>
-            Novo na Kurio? <Link to="/signup">Crie uma conta</Link>
+            Novo na Kurio?{' '}
+            <Link
+              to="/signup"
+              search={(prev) => prev}
+              className="text-highlight underline"
+            >
+              Crie uma conta
+            </Link>
           </>
         ) : (
           <>
-            Já tem uma conta? <Link to="/login">Entre</Link>
+            Já tem uma conta?{' '}
+            <Link
+              to="/login"
+              search={(prev) => prev}
+              className="text-highlight underline"
+            >
+              Entre
+            </Link>
           </>
         )}
       </p>

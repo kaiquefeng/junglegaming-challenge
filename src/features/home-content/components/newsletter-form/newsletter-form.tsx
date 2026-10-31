@@ -1,7 +1,7 @@
-import { isAxiosError } from 'axios'
 import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { ApiError } from '@/services/api-error'
 import { useNewsletterSubscription } from '../../hooks/use-home-content'
 import type { NewsletterFormProps } from './newsletter-form.types'
 
@@ -17,10 +17,10 @@ export function NewsletterForm({
   const { mutate, isPending, isSuccess, isError, data, error, reset } =
     useNewsletterSubscription()
 
-  const errorMessage = isAxiosError<{ message?: string }>(error)
-    ? (error.response?.data?.message ??
-      'Não foi possível concluir a inscrição.')
-    : 'Não foi possível concluir a inscrição.'
+  const errorMessage =
+    error instanceof ApiError && error.code === 'validation'
+      ? error.message
+      : 'Não foi possível concluir a inscrição.'
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

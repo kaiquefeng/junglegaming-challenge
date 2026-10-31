@@ -1,7 +1,6 @@
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Eye } from 'lucide-react'
+import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from '@/components/button'
-import { Input } from '@/components/input'
+import { FormField } from '@/components/form-field'
 import {
   Modal,
   ModalContent,
@@ -9,7 +8,9 @@ import {
   ModalTitle,
 } from '@/components/modal'
 import { SocialIcon } from '@/components/social-icon'
+import { announce } from '@/features/realtime'
 import { cn } from '@/lib/utils'
+import { useAuthForm } from '../../hooks/use-auth-form'
 import { GoogleMark } from '../google-mark/google-mark'
 import type { AuthModalProps } from './auth-modal.types'
 
@@ -18,65 +19,30 @@ const copy = {
     description:
       'Entre para gerenciar sua carteira, coleção e perfil de criador.',
     submit: 'Entrar',
-    fields: [
-      {
-        name: 'email',
-        type: 'email',
-        placeholder: 'contato@email.com',
-        autoComplete: 'email',
-      },
-      {
-        name: 'password',
-        type: 'password',
-        placeholder: 'Senha',
-        autoComplete: 'current-password',
-        toggle: true,
-      },
-    ],
   },
   signup: {
     description:
       'Crie seu perfil de colecionador e conecte uma carteira quando quiser.',
     submit: 'Criar conta',
-    fields: [
-      {
-        name: 'username',
-        type: 'text',
-        placeholder: 'Nome de usuário',
-        autoComplete: 'username',
-      },
-      {
-        name: 'email',
-        type: 'email',
-        placeholder: 'Digite seu e-mail',
-        autoComplete: 'email',
-      },
-      {
-        name: 'password',
-        type: 'password',
-        placeholder: 'Senha',
-        autoComplete: 'new-password',
-        toggle: true,
-      },
-      {
-        name: 'confirm',
-        type: 'password',
-        placeholder: 'Confirmar senha',
-        autoComplete: 'new-password',
-      },
-    ],
   },
 } as const
 
+const socialNotice = () =>
+  announce(
+    'Login social indisponível nesta versão. Use e-mail e senha.',
+    'info',
+  )
+
 export function AuthModal({ mode }: AuthModalProps) {
-  const navigate = useNavigate()
+  const router = useRouter()
   const content = copy[mode]
+  const { form, submit, pending, expired, closeTarget } = useAuthForm(mode)
 
   return (
     <Modal
       open
       onOpenChange={(open) => {
-        if (!open) navigate({ to: '/' })
+        if (!open) router.history.push(mode === 'login' ? '/' : closeTarget)
       }}
     >
       <ModalContent className="max-w-[500px] rounded-lg p-0">
@@ -88,6 +54,7 @@ export function AuthModal({ mode }: AuthModalProps) {
             >
               <Link
                 to="/login"
+                search={(prev) => prev}
                 aria-current={mode === 'login' ? 'page' : undefined}
                 className={cn(
                   mode === 'login' ? 'text-highlight' : 'text-foreground',
@@ -98,6 +65,7 @@ export function AuthModal({ mode }: AuthModalProps) {
               <span aria-hidden="true" className="h-5 w-px bg-[#f0805f]" />
               <Link
                 to="/signup"
+                search={(prev) => prev}
                 aria-current={mode === 'signup' ? 'page' : undefined}
                 className={cn(
                   mode === 'signup' ? 'text-highlight' : 'text-foreground',
@@ -112,35 +80,88 @@ export function AuthModal({ mode }: AuthModalProps) {
           </ModalDescription>
         </div>
 
-        <form className="flex flex-col gap-3 px-6 pt-6 sm:px-20">
-          {content.fields.map((field) => (
-            <div key={field.name} className="relative">
-              <Input
-                name={field.name}
-                type={field.type}
-                placeholder={field.placeholder}
-                autoComplete={field.autoComplete}
-                aria-label={field.placeholder}
-                className="h-10 rounded-[5px] border-border px-4 pr-12 text-sm shadow-none placeholder:text-[#b39463]"
-              />
-              {'toggle' in field && (
-                <Eye
-                  aria-hidden="true"
-                  className="absolute top-1/2 right-3 size-5 -translate-y-1/2 text-[#b39463]"
-                />
-              )}
-            </div>
-          ))}
+        <form
+          noValidate
+          onSubmit={submit}
+          className="flex flex-col gap-3 px-6 pt-6 sm:px-20"
+        >
+          {expired && (
+            <p
+              role="alert"
+              className="rounded border border-primary p-2 text-sm"
+            >
+              Sua sessão expirou. Entre novamente para continuar de onde parou.
+            </p>
+          )}
+          {form.formError && (
+            <p
+              role="alert"
+              className="rounded border border-destructive p-2 text-sm text-destructive"
+            >
+              {form.formError}
+            </p>
+          )}
+          {mode === 'signup' && (
+            <FormField
+              id="auth-username"
+              label="Nome de usuário"
+              placeholder="Nome de usuário"
+              hideLabel
+              autoComplete="username"
+              {...form.bind('username')}
+            />
+          )}
+          <FormField
+            id="auth-email"
+            label="E-mail"
+            type="email"
+            placeholder={
+              mode === 'login' ? 'contato@email.com' : 'Digite seu e-mail'
+            }
+            hideLabel
+            autoComplete="email"
+            {...form.bind('email')}
+          />
+          <FormField
+            id="auth-password"
+            label="Senha"
+            type="password"
+            placeholder="Senha"
+            hideLabel
+            autoComplete={
+              mode === 'login' ? 'current-password' : 'new-password'
+            }
+            {...form.bind('password')}
+          />
+          {mode === 'signup' && (
+            <FormField
+              id="auth-confirm"
+              label="Confirmar senha"
+              type="password"
+              placeholder="Confirmar senha"
+              hideLabel
+              autoComplete="new-password"
+              {...form.bind('confirm')}
+            />
+          )}
           {mode === 'login' && (
-            <a href="/login" className="self-end text-sm text-highlight">
+            <button
+              type="button"
+              onClick={() =>
+                announce('Recuperação de senha indisponível nesta versão.')
+              }
+              className="self-end text-sm text-highlight"
+            >
               Esqueceu a senha?
-            </a>
+            </button>
           )}
           <Button
             type="submit"
+            disabled={pending}
+            aria-busy={pending}
             className="mt-3 h-[45px] rounded-[5px] text-base font-bold"
           >
-            {content.submit}
+            {pending ? 'Aguarde…' : content.submit}
           </Button>
         </form>
 
@@ -152,14 +173,18 @@ export function AuthModal({ mode }: AuthModalProps) {
           </div>
           <div className="flex flex-col gap-3 px-6 sm:px-20">
             <Button
+              type="button"
               variant="outline"
+              onClick={socialNotice}
               className="h-10 rounded-[5px] text-[13px] text-muted-foreground"
             >
               <GoogleMark />
               Continuar com Google
             </Button>
             <Button
+              type="button"
               variant="outline"
+              onClick={socialNotice}
               className="h-10 rounded-[5px] text-[13px] text-muted-foreground"
             >
               <SocialIcon

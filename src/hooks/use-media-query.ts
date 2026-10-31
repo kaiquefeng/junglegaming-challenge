@@ -12,5 +12,4 @@ export function useMediaQuery(query: string) {
   )
 }
 
-// Mesmo breakpoint `md` do Tailwind: abaixo dele valem os layouts mobile do Figma.
 export const useIsDesktop = () => useMediaQuery('(min-width: 768px)')

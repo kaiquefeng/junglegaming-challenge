@@ -15,11 +15,11 @@ const asNumber = (value: unknown) => {
 const asString = (value: unknown) =>
   typeof value === 'string' && value !== '' ? value : undefined
 
-// Campos opcionais: a URL limpa ("/") é válida; os defaults são aplicados na página.
 export type HomeSearch = {
   tab?: NftTab
   sort?: NftSort
   page?: number
+  q?: string
   collection?: string
   network?: string
   minPrice?: number
@@ -31,6 +31,7 @@ export const Route = createFileRoute('/')({
     tab: tabs.find((tab) => tab === search.tab),
     sort: sorts.find((sort) => sort === search.sort),
     page: asNumber(search.page) && Math.max(1, Math.trunc(Number(search.page))),
+    q: asString(search.q),
     collection: asString(search.collection),
     network: asString(search.network),
     minPrice: asNumber(search.minPrice),

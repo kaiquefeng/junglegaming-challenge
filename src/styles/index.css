@@ -36,7 +36,6 @@
   }
 }
 
-/* Paleta extraída de figma/home.svg (tema único, escuro). */
 :root {
   color-scheme: dark;
   --background: #140d0a;

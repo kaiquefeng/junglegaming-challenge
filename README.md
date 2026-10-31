@@ -21,9 +21,9 @@ Copie `.env.example` para `.env` (o `.env` do repositório já vem com os valore
 | Variável | Padrão | Uso |
 | --- | --- | --- |
 | `VITE_API_URL` | `/api` | Base do cliente Axios |
-| `VITE_WS_URL` | `ws://localhost:5173` | Servidor Socket.IO |
+| `VITE_WS_URL` | _(vazio)_ | Servidor Socket.IO |
 | `VITE_ENABLE_MOCKS` | `true` | Liga o MSW (também no build de demonstração) |
-| `VITE_MOCK_SCENARIO` | `default` | Cenário inicial dos mocks (ainda sem cenários além do padrão) |
+| `VITE_MOCK_SCENARIO` | `default` | Cenário inicial dos mocks (ver abaixo) |
 
 ## Comandos
 
@@ -39,8 +39,47 @@ Copie `.env.example` para `.env` (o `.env` do repositório já vem com os valore
 
 ## Credenciais fictícias, cenários e reset
 
-Ainda não existem (sem autenticação nem cenários nesta etapa). Serão documentados aqui junto com os fixtures e o reset.
+| Usuário | E-mail | Senha | Estado inicial |
+| --- | --- | --- | --- |
+| Kaique Feng | `kaique@dev.com` | `Senha@123` | Favorito no NFT 1, carteira principal MetaMask cadastrada |
+| Bruno Lima | `bruno@kurio.test` | `Senha@123` | Sem carteiras (preencha em `/wallets`) |
+
+Cupons: `KURIO10` (10%), `WELCOME5` (5%), `EXPIRED20` (expirado) — qualquer outro é inválido.
+Conexão de carteira: **Coinbase Wallet + rede Solana é recusada**. Endereço terminado em `dead` gera pagamento recusado.
+Senhas são guardadas só como hash (SHA-256) no estado simulado.
+
+**Cenários** (`?scenario=<nome>` na URL; fica salvo no `localStorage`; também `VITE_MOCK_SCENARIO`):
+
+| Cenário | Efeito |
+| --- | --- |
+| `default` | Sucesso, latência baixa |
+| `empty` | Catálogo vazio |
+| `slow` | 2,5 s de latência (skeletons) |
+| `variable-latency` | Latência variável determinística (100–1500 ms) |
+| `out-of-order` | Consultas filtradas respondem depois das sem filtro |
+| `flaky` | Toda 2ª consulta de `/nfts` falha com 503 |
+| `offline` | `/nfts` falha por queda de conexão |
+| `server-error` | `/nfts` responde 500 |
+| `order-timeout` | O pedido é criado mas a resposta demora 12 s (timeout do cliente → retentativa idempotente) |
+| `payment-declined` | O pagamento é recusado |
+| `favorites-fail` | Favoritar/desfavoritar falha (rollback) |
+| `forbidden-profile` | `/profile` responde 403 |
+
+**Reset:** abra `/?reset=1` (restaura usuários, estoque, carrinhos, pedidos e a sessão), ou `POST /api/__mocks/reset`,
+ou `__kurioMocks.reset()` no console. Controles do servidor simulado no console (alteram o **servidor**, e a UI reage via REST/Socket.IO):
+`__kurioMocks.updateNft('1', { price: '1.50' })`, `.updateNft('1', { editions: { '1/50': 0 } })`, `.disconnectSockets()`,
+`.expireSessions()`, `.setScenario('slow')`.
+
+Reproduzir os fluxos de falha: pagamento recusado → `/?scenario=payment-declined`, entre como Kaique, adicione um NFT, `/checkout`,
+conecte a carteira e confirme. Timeout com recuperação → `/?scenario=order-timeout` (mesmo fluxo; a tela avisa da nova tentativa e o
+pedido é o mesmo). Preço mudando no checkout → com o checkout aberto, rode `__kurioMocks.updateNft('1', { price: '1.50' })`.
 
 ## Deploy
+
+**Dokploy (Nixpacks):** crie uma aplicação com o provider *Git*, build type **Nixpacks** e porta `3000`.
+O `nixpacks.toml` instala com bun, roda `bun run build` e serve `dist/` com o Caddy (`Caddyfile`), com fallback de SPA
+(refresh e acesso direto às rotas) e cache longo só para `/assets` e `/images`. As variáveis `VITE_*` são de build e já têm
+os valores de demonstração (mocks ligados) no `nixpacks.toml`; para mudá-las, defina-as em *Environment* do Dokploy e faça novo deploy.
+Teste local: `nixpacks build . --name kurio && docker run --rm -p 3000:3000 kurio`.
 
 `vercel.json` já define o rewrite SPA (refresh e acesso direto às rotas). Importe o repositório na Vercel (preset Vite).

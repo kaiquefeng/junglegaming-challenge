@@ -62,8 +62,8 @@ export const nfts: Nft[] = seeds.map(
   ([name, price, image, collection, network, previousPrice], i) => ({
     id: String(i + 1),
     name,
-    price,
-    previousPrice,
+    price: price.toFixed(2),
+    previousPrice: previousPrice?.toFixed(2),
     currency: 'ETH',
     image: images[image].src,
     imageAlt: images[image].alt,
@@ -72,6 +72,8 @@ export const nfts: Nft[] = seeds.map(
     isNew: i % 3 === 0 || i < 4,
     isTrending: i % 2 === 1,
     listedAt: new Date(Date.UTC(2026, 8, 30 - i)).toISOString(),
+    version: 1,
+    soldOut: false,
   }),
 )
 

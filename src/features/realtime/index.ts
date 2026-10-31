@@ -1,2 +1,3 @@
-// API pública da feature realtime: exporte aqui apenas o que páginas e outras features podem importar.
-export {}
+export { announce } from './announcer'
+export { AnnouncerRegion } from './components/announcer-region'
+export { useRealtime } from './hooks/use-realtime'

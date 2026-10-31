@@ -5,7 +5,13 @@ import type { NftGridProps } from './nft-grid.types'
 const gridClass =
   'grid grid-cols-1 gap-x-8 gap-y-10 min-[480px]:grid-cols-2 xl:grid-cols-3'
 
-export function NftGrid({ items, isLoading, isError, onRetry }: NftGridProps) {
+export function NftGrid({
+  items,
+  isLoading,
+  isError,
+  onRetry,
+  favorites,
+}: NftGridProps) {
   if (isLoading) {
     return (
       <div className={gridClass} aria-busy="true">
@@ -52,12 +58,15 @@ export function NftGrid({ items, isLoading, isError, onRetry }: NftGridProps) {
       {items.map((nft) => (
         <li key={nft.id}>
           <NftCard
+            id={nft.id}
             name={nft.name}
             price={nft.price}
             previousPrice={nft.previousPrice}
             currency={nft.currency}
             image={nft.image}
             imageAlt={nft.imageAlt}
+            soldOut={nft.soldOut}
+            favorite={favorites?.(nft)}
           />
         </li>
       ))}
