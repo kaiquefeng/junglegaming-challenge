@@ -150,7 +150,7 @@ export function MobileCheckout() {
         )}
         <CheckoutAlerts checkout={checkout} />
 
-        <p className="flex items-center justify-end gap-7 font-bold">
+        <div className="flex items-center justify-end gap-7 font-bold">
           <span>Total:</span>
           {cart ? (
             <span className="text-lg text-highlight" aria-live="polite">
@@ -159,7 +159,7 @@ export function MobileCheckout() {
           ) : (
             <Skeleton className="h-6 w-24" />
           )}
-        </p>
+        </div>
       </div>
       <button
         type="submit"

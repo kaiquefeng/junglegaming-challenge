@@ -65,7 +65,7 @@ export function SiteHeader() {
                 aria-label="Principal (mobile)"
                 className="flex flex-col px-4"
               >
-                {data?.nav.map((item, index) => (
+                {data?.nav?.map((item, index) => (
                   <SheetClose asChild key={item.href}>
                     <a
                       href={item.href}
@@ -93,7 +93,7 @@ export function SiteHeader() {
             aria-label="Principal"
           >
             <NavigationMenuList className="gap-10">
-              {data.nav.map((item, index) => (
+              {data?.nav?.map((item, index) => (
                 <NavigationMenuItem key={item.href}>
                   <NavigationMenuLink
                     asChild

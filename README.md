@@ -22,7 +22,7 @@ Copie `.env.example` para `.env` (o `.env` do repositório já vem com os valore
 | --- | --- | --- |
 | `VITE_API_URL` | `/api` | Base do cliente Axios |
 | `VITE_WS_URL` | _(vazio)_ | Servidor Socket.IO |
-| `VITE_ENABLE_MOCKS` | `true` | Liga o MSW (também no build de demonstração) |
+| `VITE_ENABLE_MOCKS` | `true` | MSW ligado por padrão, mesmo sem `.env`; `false` desliga (usa backend real) |
 | `VITE_MOCK_SCENARIO` | `default` | Cenário inicial dos mocks (ver abaixo) |
 
 ## Comandos

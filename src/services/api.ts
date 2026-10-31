@@ -4,7 +4,7 @@ import {
   getToken,
   notifySessionExpired,
 } from '@/features/authentication/session'
-import { toApiError } from './api-error'
+import { ApiError, toApiError } from './api-error'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
@@ -21,7 +21,19 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const contentType = String(response.headers['content-type'] ?? '')
+    if (contentType.includes('text/html')) {
+      return Promise.reject(
+        new ApiError({
+          code: 'transient',
+          message:
+            'A API respondeu HTML em vez de JSON. Verifique se os mocks (VITE_ENABLE_MOCKS=true) ou o backend estão ativos.',
+        }),
+      )
+    }
+    return response
+  },
   (error: unknown) => {
     const apiError = toApiError(error)
 
